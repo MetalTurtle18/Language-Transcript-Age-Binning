@@ -137,8 +137,9 @@ if __name__ == '__main__':
         'Japanese': [],  # TODO
     }
     age_bins = [0, 18, 30, 48, 72, 96, 150]
-
     try:
+        sh.rmtree('binned')
+    except FileNotFoundError:
         os.mkdir('binned')
     except FileExistsError:
         print('Directory "binned" already exists. Continuing...\n')
