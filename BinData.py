@@ -126,23 +126,25 @@ def find_bin(boundaries: list[int], value: int) -> str | None:
     return None  # Value is out of range
 
 
+languages = ['Spanish', 'English']#, 'Japanese'] TODO
+pronouns = {
+    'Spanish': ['yo', 'tú', 'vos', 'usted', 'él', 'ella', 'nosotros', 'nosotros', 'vosotros', 'vosotras', 'ustedes',
+                'ellos', 'ellas'],
+    'English': ['I', 'you', 'he', 'she', 'we', 'they'],
+    'Japanese': [],  # TODO
+}
+age_bins = [0, 18, 30, 48, 72, 96, 150]
+
 if __name__ == '__main__':
     test_convert_age()
 
-    languages = ['Spanish', 'English', 'Japanese']
-    pronouns = {
-        'Spanish': ['yo', 'tú', 'vos', 'usted', 'él', 'ella', 'nosotros', 'nosotros', 'vosotros', 'vosotras', 'ustedes',
-                    'ellos', 'ellas'],
-        'English': ['I', 'you', 'he', 'she', 'we', 'they'],
-        'Japanese': [],  # TODO
-    }
-    age_bins = [0, 18, 30, 48, 72, 96, 150]
     try:
         sh.rmtree('binned')
     except FileNotFoundError:
-        os.mkdir('binned')
-    except FileExistsError:
-        print('Directory "binned" already exists. Continuing...\n')
+        print('Directory "binned" does not exist yet. Continuing...\n')
+    os.mkdir('binned')
+
+    open('commands.bat', 'w').close()  # Create and/or clear the batch file from any previous runs
 
     for language in languages:
         target_ids = {'CHI'}
@@ -155,9 +157,9 @@ if __name__ == '__main__':
             print(f'Directory "binned/{language}" already exists. Continuing...\n')
         for b in range(len(age_bins) - 1):
             try:
-                os.mkdir(f'binned/{language}/{age_bins[b]}-{age_bins[b+1]}')
+                os.mkdir(f'binned/{language}/{age_bins[b]}-{age_bins[b + 1]}')
             except FileExistsError:
-                print(f'Directory "binned/{language}/{age_bins[b]}-{age_bins[b+1]}" already exists. Continuing...\n')
+                print(f'Directory "binned/{language}/{age_bins[b]}-{age_bins[b + 1]}" already exists. Continuing...\n')
 
         # Walk the directory recursively to find every transcript file
         for root, _, files in os.walk(language):
@@ -176,9 +178,15 @@ if __name__ == '__main__':
                 age = sum([s[1] for s in child_speakers]) // len(child_speakers)
                 sh.copy(transcript, f'binned/{language}/{find_bin(age_bins, age)}/{transcript.split("/")[-1]}')
 
-        # Print the full CLAN command to count pronouns in a directory of .cha files for a given language
-        print(clan_command(target_ids, pronouns[language], f'pronoun_counts_{language}'))
-        print()
+        # Make a batch file with all the commands to run in CLAN
+        for age in range(len(age_bins) - 1):
+            age_bin = f'{age_bins[age]}-{age_bins[age + 1]}'
+            directory = os.path.join('binned', language, age_bin)
+            command = clan_command(target_ids, pronouns[language], f'../../pronoun_counts_{language}_{age_bin}')
+            with open('commands.bat', 'a') as file:
+                file.write(f'cd {directory}\n')
+                file.write(f'{command}\n')
+                file.write(f'cd ../../../\n')
 
         _, _, patches = plt.hist(ages, bins=age_bins, color='skyblue', edgecolor='black')
         plt.bar_label(patches)
