@@ -128,7 +128,7 @@ def find_bin(boundaries: list[int], value: int) -> str | None:
 
 languages = ['Spanish', 'English']#, 'Japanese'] TODO
 pronouns = {
-    'Spanish': ['yo', 'tú', 'vos', 'usted', 'él', 'ella', 'nosotros', 'nosotros', 'vosotros', 'vosotras', 'ustedes',
+    'Spanish': ['yo', 'tú', 'vos', 'usted', 'él', 'ella', 'nosotros', 'nosotras', 'vosotros', 'vosotras', 'ustedes',
                 'ellos', 'ellas'],
     'English': ['I', 'you', 'he', 'she', 'we', 'they'],
     'Japanese': [],  # TODO
