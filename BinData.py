@@ -1,4 +1,6 @@
 import os
+import matplotlib.pyplot as plt
+import shutil as sh
 
 
 def clan_command(targets: set[str], strings: list[str], output: str) -> str:
@@ -34,6 +36,7 @@ def convert_age(age_string: str) -> int | None:
     :return: Total number of months as an integer or None if the input is invalid.
     :rtype: int | None
     """
+    if age_string == '': return None
     parts = age_string.split(";")  # Split into year and month
     if len(parts) == 1:  # Only years provided
         year = int(parts[0])
@@ -99,6 +102,30 @@ def extract_speaker(line: str) -> tuple[str, int, str]:
     return data[2], convert_age(data[3]), data[7]
 
 
+def find_bin(boundaries: list[int], value: int) -> str | None:
+    """
+    Determines the bin range in which a given value falls based on a list of ordered boundary values.
+
+    :param boundaries: The list of integers representing the boundary values,
+        which must be sorted in ascending order. These define the bins.
+    :param value: The integer value to determine the range (bin) for.
+    :return: A string representation of the range in the format
+        "lower-upper" if the value falls within a bin, or None if the
+        value does not fall within any defined bin.
+    """
+
+    for i in range(len(boundaries) - 1):
+        # Check if the value falls into the range [boundaries[i], boundaries[i+1])
+        if boundaries[i] <= value < boundaries[i + 1]:
+            return f"{boundaries[i]}-{boundaries[i + 1]}"
+
+    # Handle edge case where the value matches the exact upper boundary of the final bin
+    if value == boundaries[-1]:
+        return f"{boundaries[-2]}-{boundaries[-1]}"
+
+    return None  # Value is out of range
+
+
 if __name__ == '__main__':
     test_convert_age()
 
@@ -109,11 +136,28 @@ if __name__ == '__main__':
         'English': ['I', 'you', 'he', 'she', 'we', 'they'],
         'Japanese': [],  # TODO
     }
+    age_bins = [0, 18, 30, 48, 72, 96, 150]
+
+    try:
+        os.mkdir('binned')
+    except FileExistsError:
+        print('Directory "binned" already exists. Continuing...\n')
 
     for language in languages:
         target_ids = {'CHI'}
         datasets = os.listdir(language)
         transcripts = []
+        ages = []
+        try:
+            os.mkdir(f'binned/{language}')
+        except FileExistsError:
+            print(f'Directory "binned/{language}" already exists. Continuing...\n')
+        for b in range(len(age_bins) - 1):
+            try:
+                os.mkdir(f'binned/{language}/{age_bins[b]}-{age_bins[b+1]}')
+            except FileExistsError:
+                print(f'Directory "binned/{language}/{age_bins[b]}-{age_bins[b+1]}" already exists. Continuing...\n')
+
         # Walk the directory recursively to find every transcript file
         for root, _, files in os.walk(language):
             transcripts.extend([os.path.join(root, t) for t in files if t.endswith('.cha')])
@@ -121,9 +165,23 @@ if __name__ == '__main__':
         for transcript in transcripts:
             id_lines = extract_id_lines(transcript)
             speakers = [extract_speaker(s) for s in id_lines]
-            child_speakers = list(filter(lambda p: p[2] == 'Target_Child', speakers))
+            # Filter only the speakers out of the transcript who are designated target child and who have an age
+            child_speakers = list(filter(lambda p: p[2] == 'Target_Child' and p[1], speakers))
             target_ids.update([s[0] for s in child_speakers])
+            ages.extend([s[1] for s in child_speakers])
+            # Move the files around now
+            if child_speakers:  # Only copy this transcript if it contains child utterances
+                # If there are multiple child speakers, just average their ages
+                age = sum([s[1] for s in child_speakers]) // len(child_speakers)
+                sh.copy(transcript, f'binned/{language}/{find_bin(age_bins, age)}/{transcript.split("/")[-1]}')
 
         # Print the full CLAN command to count pronouns in a directory of .cha files for a given language
         print(clan_command(target_ids, pronouns[language], f'pronoun_counts_{language}'))
         print()
+
+        _, _, patches = plt.hist(ages, bins=age_bins, color='skyblue', edgecolor='black')
+        plt.bar_label(patches)
+        plt.xlabel('Age (months)')
+        plt.ylabel('No. of transcripts')
+        plt.title(f'Age Distribution for {language} Datasets')
+        plt.show()
