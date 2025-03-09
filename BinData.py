@@ -126,14 +126,32 @@ def find_bin(boundaries: list[int], value: int) -> str | None:
     return None  # Value is out of range
 
 
-languages = ['Spanish', 'English']#, 'Japanese'] TODO
+languages = ['Spanish', 'English', 'Japanese']
 pronouns = {
     'Spanish': ['yo', 'tú', 'vos', 'usted', 'él', 'ella', 'nosotros', 'nosotras', 'vosotros', 'vosotras', 'ustedes',
                 'ellos', 'ellas'],
     'English': ['I', 'you', 'he', 'she', 'we', 'they'],
-    'Japanese': [],  # TODO
+    'Japanese': ['boku', 'ぼく', 'atashi', 'あたし', 'kimi', 'きみ', 'omae', 'おまえ', 'ore', 'おれ', 'aitsu', 'あいつ',
+                 'watashi', 'わたし', 'watakushi', 'わたくし', 'anata', 'あなた', 'tachi', 'たち', 'domo', 'ども',
+                 'gata', 'がた', 'ra', 'ら'],
 }
-age_bins = [0, 18, 30, 48, 72, 96, 150]
+japanese_kana_romanization = {
+    'ぼく': 'boku',
+    'あたし': 'atashi',
+    'きみ': 'kimi',
+    'おまえ': 'omae',
+    'おれ': 'ore',
+    'あいつ': 'aitsu',
+    'わたし': 'watashi',
+    'わたくし': 'watakushi',
+    'あなた': 'anata',
+    'たち': 'tachi',
+    'ども': 'domo',
+    'がた': 'gata',
+    'ら': 'ra',
+}
+# age_bins = [0, 18, 30, 48, 72, 96, 150]
+age_bins = [0, 9, 18, 24, 30, 39, 48, 60, 72, 84, 96, 123, 150]
 
 if __name__ == '__main__':
     test_convert_age()
