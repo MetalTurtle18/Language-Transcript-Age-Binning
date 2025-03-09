@@ -24,6 +24,7 @@ def combine_speakers(cex_file):
 
 
 if __name__ == '__main__':
+    language_tokens = defaultdict(list[int])
     for language in languages:
         pronouns_counts = defaultdict(list[float])
         for age in range(len(age_bins) - 1):
@@ -35,6 +36,7 @@ if __name__ == '__main__':
                     pronouns_counts[pronoun].append(words[pronoun] / tokens)
                 else:
                     pronouns_counts[pronoun].append(0)
+            language_tokens[language].append(tokens)
         if language == 'Japanese':  # Special handling because of Japanese romanization vs kana
             for kana, romanization in japanese_kana_romanization.items():
                 pronouns_counts[romanization] = [i + j for i, j in zip(pronouns_counts[romanization], pronouns_counts[kana])]
@@ -49,3 +51,13 @@ if __name__ == '__main__':
         plt.ylabel('Frequency of pronoun (occurrences per total words)')
         plt.title(f'Frequency of Pronouns by Child Age in {language}')
         plt.show()
+
+    fig, ax = plt.subplots(constrained_layout=True)
+    for label, values in language_tokens.items():
+        plt.plot(values, label=label)
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    plt.xticks(range(len(age_bins) - 1), age_bins[1:])
+    plt.xlabel('Age (months)')
+    plt.ylabel('Total number of words (tokens)')
+    plt.title('Total Number of Words by Child Age Across Languages')
+    plt.show()
